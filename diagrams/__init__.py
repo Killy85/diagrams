@@ -160,14 +160,18 @@ class Diagram:
         """Create a new node."""
         self.dot.node(hashid, label=label, **attrs)
 
-    def connect(self, node: "Node", node2: "Node", directed=True) -> None:
+    def connect(self, node: "Node", node2: "Node", directed=True,
+                                                            label=None) -> None:
         """Connect the two Nodes."""
         attrs = {"dir": "none"} if not directed else {}
+        attrs['label'] = label or ''
         self.dot.edge(node.hashid, node2.hashid, **attrs)
 
-    def reverse(self, node: "Node", node2: "Node", directed=True) -> None:
+    def reverse(self, node: "Node", node2: "Node", directed=True,
+                                                            label=None) -> None:
         """Connect the two Nodes in reverse direction."""
         attrs = {"dir": "none"} if not directed else {"dir": "back"}
+        attrs['label'] = label or ''
         self.dot.edge(node.hashid, node2.hashid, **attrs)
 
     def subgraph(self, dot: Digraph) -> None:
@@ -318,38 +322,38 @@ class Node:
         self.__sub__(other)
         return self
 
-    def __rshift__(self, other: Union["Node", List["Node"]]):
+    def __rshift__(self, other: Union["Node", List["Node"]], label=None):
         """Implements Self >> Node and Self >> [Nodes]."""
         if not isinstance(other, list):
-            return self.connect(other)
+            return self.connect(other, label=label)
         for node in other:
-            self.connect(node)
+            self.connect(node, label=label)
         return other
 
-    def __lshift__(self, other: Union["Node", List["Node"]]):
+    def __lshift__(self, other: Union["Node", List["Node"]], label=None):
         """Implements Self << Node and Self << [Nodes]."""
         if not isinstance(other, list):
-            return self.reverse(other)
+            return self.reverse(other, label=label)
         for node in other:
-            self.reverse(node)
+            self.reverse(node, label=label)
         return other
 
-    def __rrshift__(self, other: List["Node"]):
+    def __rrshift__(self, other: List["Node"], label=None):
         """
         Called for [Nodes] >> Self because list of Nodes don't have
         __rshift__ operators.
         """
         for node in other:
-            node.connect(self)
+            node.connect(self, label=label)
         return self
 
-    def __rlshift__(self, other: List["Node"]):
+    def __rlshift__(self, other: List["Node"], label=None):
         """
         Called for [Nodes] << Self because list of Nodes don't have
         __lshift__ operators.
         """
         for node in other:
-            node.reverse(self)
+            node.reverse(self, label=label)
         return self
 
     @property
@@ -357,7 +361,7 @@ class Node:
         return self._hash
 
     # TODO: option for adding flow description to the connection edge
-    def connect(self, node: "Node", directed=True):
+    def connect(self, node: "Node", directed=True, label=None):
         """Connect to other node.
 
         :param node: Other node instance.
@@ -367,10 +371,10 @@ class Node:
         if not isinstance(node, Node):
             ValueError(f"{node} is not a valid Node")
         # An edge must be added on the global diagrams, not a cluster.
-        self._diagram.connect(self, node, directed)
+        self._diagram.connect(self, node, directed, label)
         return node
 
-    def reverse(self, node: "Node", directed=True):
+    def reverse(self, node: "Node", directed=True, label=None):
         """Connect to other node in reverse direction.
 
         :param node: Other node instance.
@@ -380,7 +384,7 @@ class Node:
         if not isinstance(node, Node):
             ValueError(f"{node} is not a valid Node")
         # An edge must be added on the global diagrams, not a cluster.
-        self._diagram.reverse(self, node, directed)
+        self._diagram.reverse(self, node, directed, label)
         return node
 
     @staticmethod
